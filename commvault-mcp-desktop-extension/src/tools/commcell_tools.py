@@ -102,6 +102,42 @@ def get_entity_counts() -> dict:
         logger.error(f"Error retrieving entity counts: {e}")
         return ToolError({"error": str(e)})
     
+def get_audit_trail(
+    limit: Annotated[int, Field(description="Maximum number of audit records to return.")] = 50,
+    offset: Annotated[int, Field(description="Starting position in the result list, for pagination.")] = 0,
+    time_range: Annotated[str, Field(description="Time window to look back over: hours (e.g. '-PT24H'), days ('-P7D'), months ('-P12M'), or an explicit range ('2024-06-05T06:43:56Z 2024-06-26T06:43:56Z'). Defaults to the last 24 hours.")] = "-PT24H",
+    user_id: Annotated[int, Field(description="Filter to audit records for a specific user ID. Optional.")] = 0,
+    user_group_id: Annotated[int, Field(description="Filter to audit records for a specific user group ID. Optional.")] = 0,
+    use_local_timezone: Annotated[bool, Field(description="Report timestamps in the local timezone instead of the CommServe timezone.")] = False,
+    anomalous_only: Annotated[bool, Field(description="If true, only return audit entries with unusual frequency instead of all audits.")] = False,
+    search_string: Annotated[str, Field(description="Free-text keyword to search for within audit records. Optional.")] = "",
+) -> dict:
+    """
+    Retrieves the CommCell audit trail: operations performed by users such as logins,
+    configuration changes, and administrative actions.
+    """
+    try:
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "parameter.TimeRange": time_range,
+            "parameter.timeZone": 1 if use_local_timezone else 0,
+            "parameter.i_anomalous": 1 if anomalous_only else 0,
+        }
+        if user_id:
+            params["parameter.userlist"] = user_id
+        if user_group_id:
+            params["parameter.usergrouplist"] = user_group_id
+        if search_string:
+            params["parameter.serachString"] = search_string
+        endpoint = "cr/reportsplusengine/datasets/5e7dfa05-07cd-4beb-be9c-181a1722c2e8:571a5443-fb35-435e-b013-ecd1a6dcfb65/data"
+        api_response = commvault_api_client.get(endpoint, params=params)
+        return format_report_dataset_response(api_response)
+    except Exception as e:
+        logger.error(f"Error retrieving audit trail: {e}")
+        return ToolError({"error": str(e)})
+
+
 def create_send_logs_job_for_commcell(emailid: Annotated[str, Field(description="The email id to send logs to.")], commcell_name: Annotated[str, Field(description="The commcell name for which to send logs.")]) -> dict:
     """
     Triggers a new send logs job for the specified CommCell and sends logs to the provided email address.
@@ -184,5 +220,6 @@ COMMCELL_MANAGEMENT_TOOLS = [
     get_storage_space_utilization,
     create_send_logs_job_for_commcell,
     get_commcell_details,
-    get_entity_counts
+    get_entity_counts,
+    get_audit_trail,
 ]

@@ -129,24 +129,34 @@ def sanitize_endpoint_path(endpoint: str) -> str:
     
     # Validate each segment
     sanitized_segments = []
-    for segment in segments:
+    for index, segment in enumerate(segments):
         if not segment:
             continue
-            
+
+        # Colons are disallowed only in the first segment: urljoin/urlsplit only
+        # ever interprets a colon as a scheme separator when it precedes the
+        # first '/' in the string, so a colon there (e.g. "javascript:...",
+        # "evil:8080/x") could make _build_url's urljoin() treat the endpoint
+        # as an absolute URL and bypass base_url entirely. A colon inside a
+        # later segment can't be reinterpreted that way, and some legitimate
+        # Commvault report dataset endpoints use compound "<guid>:<guid>" ids
+        # in a non-first segment (e.g. Reporting/get-audit-trail).
+        forbidden_chars = r'[\/\\\?\#\<\>\"\|\*]' if index > 0 else r'[\/\\\?\#\<\>\"\|\*\:]'
+
         # Check for dangerous characters in segment
         # Allow: alphanumeric, hyphens, underscores, dots (for version numbers like v4, V2)
         # Disallow: path separators, backslashes, query markers, and other special chars
-        if re.search(r'[\/\\\?\#\<\>\"\|\*\:]', segment):
+        if re.search(forbidden_chars, segment):
             raise ValueError(f"Invalid characters detected in endpoint segment: {segment}")
-        
+
         # Additional check: ensure no encoded dangerous chars
         try:
             decoded_segment = unquote(segment)
-            if re.search(r'[\/\\\?\#\<\>\"\|\*\:]', decoded_segment):
+            if re.search(forbidden_chars, decoded_segment):
                 raise ValueError(f"Invalid encoded characters detected in endpoint segment: {segment}")
         except Exception:
             pass  # If decoding fails, the original check above will catch it
-        
+
         sanitized_segments.append(segment)
     
     # Reconstruct the path
