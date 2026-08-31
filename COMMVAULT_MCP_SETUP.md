@@ -78,12 +78,13 @@ answering, don't take this section's word for it. If you're a human: same advice
 
 ## Step 0 — Download the extension
 
-Get **[commvault-mcp.mcpb](https://github.com/tirthankarC/commvault-mcp-setup/releases/latest)** from the
-[Releases page](https://github.com/tirthankarC/commvault-mcp-setup/releases/latest) and save it somewhere
-you'll find it again (e.g. your Desktop). Each release lists a SHA-256 checksum in its notes — worth checking
-against `shasum -a 256 commvault-mcp.mcpb` (macOS/Linux) or `certutil -hashfile commvault-mcp.mcpb SHA256`
-(Windows) if you want to confirm the download wasn't altered in transit. The same repo also hosts full source
-under [`commvault-mcp-desktop-extension/`](https://github.com/tirthankarC/commvault-mcp-setup/tree/main/commvault-mcp-desktop-extension)
+Download **[commvault-mcp.mcpb](https://github.com/tirthankarC/commvault-mcp-setup/releases/latest/download/commvault-mcp.mcpb)**
+directly (one click, always the current version) and save it somewhere you'll find it again (e.g. your
+Desktop). To check the checksum or read what changed, see the [Releases page](https://github.com/tirthankarC/commvault-mcp-setup/releases/latest)
+instead — each release lists a SHA-256 in its notes, worth checking against `shasum -a 256 commvault-mcp.mcpb`
+(macOS/Linux) or `certutil -hashfile commvault-mcp.mcpb SHA256` (Windows) if you want to confirm the download
+wasn't altered in transit. The same repo also hosts full source under
+[`commvault-mcp-desktop-extension/`](https://github.com/tirthankarC/commvault-mcp-setup/tree/main/commvault-mcp-desktop-extension)
 if you want to verify it matches before installing.
 
 ---
