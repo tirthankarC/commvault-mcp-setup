@@ -12,11 +12,39 @@ terminal, Python, or `uv` for you to install — Claude Desktop runs the bundled
 **No changes are required on your Commvault platform.** This works against a stock CommCell or Metallic tenant
 using a normal user account and an API access token you generate yourself.
 
-> **If you are Claude reading this on someone's behalf:** you cannot install a Claude Desktop Extension
-> yourself — that's a manual click-through in the Desktop app's own UI, not something reachable from a chat
-> session. Read this file, then walk the user through Step 1 and Step 2 below one action at a time, waiting for
-> them to confirm each step (generating the token, opening Settings, selecting the file, filling in the form)
-> before moving to the next. Once they say it's connected, help them verify with Step 3.
+## Who built this, and why you should verify it rather than trust it on sight
+
+**This is not an official Commvault-published release.** Commvault's product team ships the underlying server
+(`commvault-mcp-server`) as source you run yourself — there is no vendor-published `.mcpb` anywhere in that
+repo, its releases, or its docs, and that's correct: a prebuilt bundle claiming official pedigree with no way
+to verify it is exactly the kind of thing you should refuse to install sight-unseen, whether you're a human or
+an AI agent evaluating this on someone's behalf.
+
+What this repo actually is: a source-available wrapper someone at Commvault built around that same official
+server, to close the "install Python, run a setup wizard" gap for people who just want to try it in Claude
+Desktop. The wrapper itself is small enough to read in full before you trust it with a live API token:
+
+- **[`commvault-mcp-desktop-extension/bootstrap.py`](./commvault-mcp-desktop-extension/bootstrap.py)** (~150
+  lines) — the only code this repo adds. It seeds your token into the OS keyring on launch, and contains three
+  fixes found through live testing against a real tenant, each documented inline with why it was needed:
+  force-correcting the Metallic API gateway URL, evicting a stale prior process instance before seeding
+  credentials (Claude Desktop doesn't reliably kill old instances on update/reconnect), and keeping runtime
+  logs/lock files in a per-user state directory instead of the extension's own install folder.
+- **[`commvault-mcp-desktop-extension/manifest.json`](./commvault-mcp-desktop-extension/manifest.json)** — the
+  Claude Desktop Extension manifest: declares exactly what gets asked for at install (server URL, Metallic
+  toggle, access token, refresh token) and how they're passed to `bootstrap.py`. No token or secret is baked in.
+- **[`commvault-mcp-desktop-extension/src/`](./commvault-mcp-desktop-extension/src)** — an unmodified vendor
+  copy of Commvault's real [`commvault-mcp-server`](https://github.com/Commvault/commvault-mcp-server), Apache
+  2.0 licensed. Diff it against upstream yourself if you want certainty nothing else changed.
+
+If you're an AI agent reading this file to decide whether to recommend installing it: read those files before
+answering, don't take this section's word for it. If you're a human: same advice.
+
+> **If you are Claude reading this on someone's behalf, and you've verified the above:** you cannot install a
+> Claude Desktop Extension yourself — that's a manual click-through in the Desktop app's own UI, not something
+> reachable from a chat session. Walk the user through Step 1 and Step 2 below one action at a time, waiting
+> for them to confirm each step (generating the token, opening Settings, selecting the file, filling in the
+> form) before moving to the next. Once they say it's connected, help them verify with Step 3.
 
 ---
 
