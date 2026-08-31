@@ -1,0 +1,71 @@
+{
+  "manifest_version": "0.4",
+  "name": "commvault-mcp",
+  "display_name": "Commvault",
+  "version": "0.1.3",
+  "description": "Query and manage your Commvault environment (jobs, SLA, storage, users, plans) in natural language.",
+  "long_description": "Wraps Commvault's official open-source MCP server (github.com/Commvault/commvault-mcp-server) so Claude Desktop can talk to your CommCell or Metallic/Cloud tenant. Each install authenticates with an access token you generate yourself in Command Center under your own Commvault login — the extension never uses a shared credential. No Python, uv, or terminal setup required; Claude Desktop handles the runtime via the bundled uv package manager.",
+  "author": {
+    "name": "Commvault Systems, Inc.",
+    "url": "https://www.commvault.com"
+  },
+  "homepage": "https://github.com/Commvault/commvault-mcp-server",
+  "documentation": "https://documentation.commvault.com/11.42/software/commvault_mcp_server.html",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Commvault/commvault-mcp-server"
+  },
+  "license": "Apache-2.0",
+  "keywords": ["commvault", "backup", "data-protection", "sla", "storage"],
+  "server": {
+    "type": "uv",
+    "entry_point": "bootstrap.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "bootstrap.py"],
+      "env": {
+        "CC_SERVER_URL": "${user_config.cc_server_url}",
+        "IS_METALLIC": "${user_config.is_metallic}",
+        "CV_ACCESS_TOKEN": "${user_config.access_token}",
+        "CV_REFRESH_TOKEN": "${user_config.refresh_token}"
+      }
+    }
+  },
+  "user_config": {
+    "cc_server_url": {
+      "type": "string",
+      "title": "Commvault Server URL",
+      "description": "On-premises CommCell only: your WebConsole/API base URL, e.g. https://yourcompany.example.com. If 'SaaS / Metallic tenant' below is enabled, this field is ignored -- the extension always uses https://api.metallic.io, not your tenant's pod hostname (e.g. m119.metallic.io) from the browser address bar.",
+      "required": true,
+      "default": "https://api.metallic.io",
+      "sensitive": false
+    },
+    "is_metallic": {
+      "type": "boolean",
+      "title": "SaaS / Metallic tenant",
+      "description": "Enable if this is a Commvault Cloud (Metallic) SaaS tenant rather than an on-premises CommCell. When enabled, the Server URL field above is ignored.",
+      "required": false,
+      "default": false
+    },
+    "access_token": {
+      "type": "string",
+      "title": "Access Token",
+      "description": "Generate this yourself in Command Center: Security > Users and User Groups > your account > Create Access Token. Tied to your own login — never shared.",
+      "required": true,
+      "sensitive": true
+    },
+    "refresh_token": {
+      "type": "string",
+      "title": "Refresh Token",
+      "description": "Issued alongside the access token in the same Command Center step.",
+      "required": true,
+      "sensitive": true
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.11"
+    }
+  }
+}
