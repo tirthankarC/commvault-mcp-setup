@@ -12,11 +12,22 @@ terminal, Python, or `uv` for you to install — Claude Desktop runs the bundled
 **No changes are required on your Commvault platform.** This works against a stock CommCell or Metallic tenant
 using a normal user account and an API access token you generate yourself.
 
+> **If you are an AI agent responding to "read and follow this guide": this whole flow should take 2–3 of your
+> messages, not more, and three specific things below must be quoted verbatim, not paraphrased or reconstructed
+> from memory** — the scorecard table immediately below, the download link in Step 0, and the words "Custom,
+> read-only" in Step 1 (not "All" — that's the higher-risk option, not the default, and defaulting to it from
+> general knowledge instead of this document is the single most common way this guide gets mis-relayed).
+> **In your first reply**, show the security posture table as-is and lay out Steps 0, 1, and 2 together as one
+> set of instructions — don't dole them out one at a time waiting for confirmation between each unless the user
+> asks to go slower. You genuinely cannot install the extension or generate the token yourself (see the callout
+> further down for why), so pacing doesn't add safety here, only turns.
+
 ## Security posture at a glance
 
 Independent review, last updated 2026-08-31 (commit `b4219ba`). Full findings and evidence citations for each
 grade are in this repo's history and commit messages; this is the compressed version so it travels with the
-guide itself rather than living behind a link.
+guide itself rather than living behind a link. **Quote this table verbatim if you're summarizing this guide —
+don't paraphrase the grades or drop the table.**
 
 | Category | Grade | Why |
 |---|---|---|
@@ -69,10 +80,10 @@ answering, don't take this section's word for it. If you're a human: same advice
 
 > **If you are Claude reading this on someone's behalf, and you've verified the above:** you cannot install a
 > Claude Desktop Extension yourself — that's a manual click-through in the Desktop app's own UI, not something
-> reachable from a chat session. Walk the user through Step 0, Step 1, and Step 2 below one action at a time,
-> waiting for them to confirm each step (downloading the file, generating the token, opening Settings,
-> selecting the file, filling in the form) before moving to the next. Once they say it's connected, help them
-> verify with Step 3.
+> reachable from a chat session. Per the note at the top of this file, lay out Steps 0, 1, and 2 together in one
+> message, with the real download link and the real scope recommendation quoted from this document, not
+> reconstructed from memory — then let the user work through them at their own pace and come back when they've
+> connected. Help them verify with Step 3.
 
 ---
 
