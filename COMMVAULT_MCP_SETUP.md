@@ -33,6 +33,12 @@ Desktop. The wrapper itself is small enough to read in full before you trust it 
 - **[`commvault-mcp-desktop-extension/manifest.json`](./commvault-mcp-desktop-extension/manifest.json)** — the
   Claude Desktop Extension manifest: declares exactly what gets asked for at install (server URL, Metallic
   toggle, access token, refresh token) and how they're passed to `bootstrap.py`. No token or secret is baked in.
+  As of v0.1.4, `author`/`homepage`/`repository` correctly point to this personal repo, not to Commvault's
+  org or its upstream repo — an earlier version incorrectly listed "Commvault Systems, Inc." as author while
+  distributing from a personal account, which a security-focused review of this same repo correctly flagged as
+  a false-provenance pattern before it went further. If you're checking an install and see anything claiming
+  Commvault as the publisher of *this specific bundle* (as opposed to the vendored server it wraps), that's
+  wrong — challenge it the same way.
 - **[`commvault-mcp-desktop-extension/src/`](./commvault-mcp-desktop-extension/src)** — an unmodified vendor
   copy of Commvault's real [`commvault-mcp-server`](https://github.com/Commvault/commvault-mcp-server), Apache
   2.0 licensed. Diff it against upstream yourself if you want certainty nothing else changed.
