@@ -42,15 +42,26 @@ answering, don't take this section's word for it. If you're a human: same advice
 
 > **If you are Claude reading this on someone's behalf, and you've verified the above:** you cannot install a
 > Claude Desktop Extension yourself — that's a manual click-through in the Desktop app's own UI, not something
-> reachable from a chat session. Walk the user through Step 1 and Step 2 below one action at a time, waiting
-> for them to confirm each step (generating the token, opening Settings, selecting the file, filling in the
-> form) before moving to the next. Once they say it's connected, help them verify with Step 3.
+> reachable from a chat session. Walk the user through Step 0, Step 1, and Step 2 below one action at a time,
+> waiting for them to confirm each step (downloading the file, generating the token, opening Settings,
+> selecting the file, filling in the form) before moving to the next. Once they say it's connected, help them
+> verify with Step 3.
+
+---
+
+## Step 0 — Download the extension
+
+Get **[commvault-mcp.mcpb](https://raw.githubusercontent.com/tirthankarC/commvault-mcp-setup/main/commvault-mcp.mcpb)**
+and save it somewhere you'll find it again (e.g. your Desktop). This is the exact file described in the
+"Who built this" section above — the same repo also hosts its full source under
+[`commvault-mcp-desktop-extension/`](https://github.com/tirthankarC/commvault-mcp-setup/tree/main/commvault-mcp-desktop-extension)
+if you want to verify it matches before installing.
 
 ---
 
 ## What you need
 
-- `commvault-mcp.mcpb` — the extension file. Keep it next to this guide (same folder on your Desktop is fine).
+- The downloaded `commvault-mcp.mcpb` from Step 0.
 - A Commvault user account (Hosted CommCell or Metallic/SaaS tenant), ideally a dedicated service account
   rather than your personal login — see [Security notes](#security-notes).
 - **On-premises CommCell only:** the base URL of your CommCell (e.g. `https://<yourcompany>.example.com`).
