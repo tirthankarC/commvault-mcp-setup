@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "commvault-mcp",
   "display_name": "Commvault",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Unofficial wrapper: query and manage your Commvault environment (jobs, SLA, storage, users, plans) in natural language.",
   "long_description": "Not an official Commvault release -- a personally-built, source-available wrapper around Commvault's official open-source MCP server (github.com/Commvault/commvault-mcp-server), packaged as a one-click Claude Desktop Extension. The vendored server code is unmodified and Apache-2.0 licensed from Commvault; this bundle adds only a small bootstrap script (see repository) to bridge Claude Desktop's install-time config into that server's credential/config format. Each install authenticates with an access token you generate yourself in Command Center under your own Commvault login -- the extension never uses a shared credential. No Python, uv, or terminal setup required; Claude Desktop handles the runtime via the bundled uv package manager. Review the source before installing.",
   "author": {
@@ -32,20 +32,20 @@
     }
   },
   "user_config": {
-    "cc_server_url": {
-      "type": "string",
-      "title": "Commvault Server URL",
-      "description": "On-premises CommCell only: your WebConsole/API base URL, e.g. https://yourcompany.example.com. If 'SaaS / Metallic tenant' below is enabled, this field is ignored -- the extension always uses https://api.metallic.io, not your tenant's pod hostname (e.g. m119.metallic.io) from the browser address bar.",
-      "required": true,
-      "default": "https://api.metallic.io",
-      "sensitive": false
-    },
     "is_metallic": {
       "type": "boolean",
       "title": "SaaS / Metallic tenant",
-      "description": "Enable if this is a Commvault Cloud (Metallic) SaaS tenant rather than an on-premises CommCell. When enabled, the Server URL field above is ignored.",
+      "description": "Set this first -- it changes what the Server URL field below means. Enable if this is a Commvault Cloud (Metallic) SaaS tenant; leave off for an on-premises CommCell.",
       "required": false,
       "default": false
+    },
+    "cc_server_url": {
+      "type": "string",
+      "title": "Commvault Server URL (on-premises only)",
+      "description": "Ignored if 'SaaS / Metallic tenant' above is enabled -- the extension always uses https://api.metallic.io regardless of what's typed here, never your tenant's pod hostname (e.g. m119.metallic.io) from the browser address bar. On-premises only: enter your CommCell's WebConsole/API base URL, e.g. https://yourcompany.example.com.",
+      "required": true,
+      "default": "https://api.metallic.io",
+      "sensitive": false
     },
     "access_token": {
       "type": "string",
