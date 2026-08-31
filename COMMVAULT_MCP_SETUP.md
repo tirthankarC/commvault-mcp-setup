@@ -84,8 +84,10 @@ it into a chat window.
 
 1. Log in to Command Center.
 2. Go to **Security → Users and User Groups**, select your (service) account.
-3. Create an API access token. Choose scope **All** to start (see [Security notes](#security-notes) for
-   narrowing this later).
+3. Create an API access token. **Recommended: scope Custom, read-only** — grant view/report access on Jobs,
+   Commcell, Clients, Storage, Plans, and Schedules, and leave out job control (kill/resume/resubmit) and user
+   management unless you specifically need Claude to take those actions. Choosing All works too, but it's the
+   highest-blast-radius option if the token is ever compromised — see [Security notes](#security-notes).
 4. Note the expiry: access tokens default to 2 hours with a refresh token, renewable for up to 90 days, or
    "Forever" if your policy allows it. A refresh token is issued automatically.
 5. Copy both the **access token** and **refresh token** somewhere safe — you'll paste them into the extension's
