@@ -14,6 +14,7 @@
 # limitations under the License.
 # --------------------------------------------------------------------------
 
+import time
 from typing import Annotated
 from fastmcp.exceptions import ToolError
 from pydantic import Field
@@ -103,14 +104,8 @@ def get_entity_counts() -> dict:
         return ToolError({"error": str(e)})
     
 def get_audit_trail(
-    limit: Annotated[int, Field(description="Maximum number of audit records to return.")] = 50,
-    offset: Annotated[int, Field(description="Starting position in the result list, for pagination.")] = 0,
-    time_range: Annotated[str, Field(description="Time window to look back over: hours (e.g. '-PT24H'), days ('-P7D'), months ('-P12M'), or an explicit range ('2024-06-05T06:43:56Z 2024-06-26T06:43:56Z'). Defaults to the last 24 hours.")] = "-PT24H",
-    user_id: Annotated[int, Field(description="Filter to audit records for a specific user ID. Optional.")] = 0,
-    user_group_id: Annotated[int, Field(description="Filter to audit records for a specific user group ID. Optional.")] = 0,
-    use_local_timezone: Annotated[bool, Field(description="Report timestamps in the local timezone instead of the CommServe timezone.")] = False,
-    anomalous_only: Annotated[bool, Field(description="If true, only return audit entries with unusual frequency instead of all audits.")] = False,
-    search_string: Annotated[str, Field(description="Free-text keyword to search for within audit records. Optional.")] = "",
+    limit: Annotated[int, Field(description="Maximum number of audit records to return.")] = 20,
+    lookback_hours: Annotated[int, Field(description="Only return audit records from this many hours back from now. For example, 24 for the last 24 hours.")] = 24,
 ) -> dict:
     """
     Retrieves the CommCell audit trail: operations performed by users such as logins,
@@ -119,20 +114,9 @@ def get_audit_trail(
     try:
         params = {
             "limit": limit,
-            "offset": offset,
-            "parameter.TimeRange": time_range,
-            "parameter.timeZone": 1 if use_local_timezone else 0,
-            "parameter.i_anomalous": 1 if anomalous_only else 0,
+            "startTimeUtc": int(time.time()) - lookback_hours * 3600,
         }
-        if user_id:
-            params["parameter.userlist"] = user_id
-        if user_group_id:
-            params["parameter.usergrouplist"] = user_group_id
-        if search_string:
-            params["parameter.serachString"] = search_string
-        endpoint = "cr/reportsplusengine/datasets/5e7dfa05-07cd-4beb-be9c-181a1722c2e8:571a5443-fb35-435e-b013-ecd1a6dcfb65/data"
-        api_response = commvault_api_client.get(endpoint, params=params)
-        return format_report_dataset_response(api_response)
+        return commvault_api_client.get("v4/audits", params=params)
     except Exception as e:
         logger.error(f"Error retrieving audit trail: {e}")
         return ToolError({"error": str(e)})

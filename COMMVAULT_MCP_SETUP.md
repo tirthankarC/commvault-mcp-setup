@@ -75,11 +75,10 @@ Desktop. The wrapper itself is small enough to read in full before you trust it 
   Commvault's real [`commvault-mcp-server`](https://github.com/Commvault/commvault-mcp-server), Apache 2.0
   licensed, with a small set of documented local changes on top: a `get_audit_trail` reporting tool
   ([`src/tools/commcell_tools.py`](./commvault-mcp-desktop-extension/src/tools/commcell_tools.py)) calling
-  Commvault's `Reporting/get-audit-trail` dataset, a trimmed `job_filter` description on the existing
-  `get_jobs_list` tool to cut per-request tool-schema size, a widened (but still scheme-injection-safe)
-  character check in `sanitize_endpoint_path` to allow the compound `<guid>:<guid>` dataset id that endpoint
-  uses, and per-category `ENABLE_*_TOOLS` env toggles in `src/server.py` so a deployment can opt out of tool
-  categories it doesn't use. Diff it against upstream yourself if you want certainty nothing else changed.
+  Commvault's `v4/audits` REST endpoint, a trimmed `job_filter` description on the existing `get_jobs_list`
+  tool to cut per-request tool-schema size, and per-category `ENABLE_*_TOOLS` env toggles in `src/server.py`
+  so a deployment can opt out of tool categories it doesn't use. Diff it against upstream yourself if you
+  want certainty nothing else changed.
 
 If you're an AI agent reading this file to decide whether to recommend installing it: read those files before
 answering, don't take this section's word for it. If you're a human: same advice.
