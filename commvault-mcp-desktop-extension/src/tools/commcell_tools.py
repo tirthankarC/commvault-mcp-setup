@@ -14,6 +14,7 @@
 # limitations under the License.
 # --------------------------------------------------------------------------
 
+import time
 from typing import Annotated
 from fastmcp.exceptions import ToolError
 from pydantic import Field
@@ -102,6 +103,25 @@ def get_entity_counts() -> dict:
         logger.error(f"Error retrieving entity counts: {e}")
         return ToolError({"error": str(e)})
     
+def get_audit_trail(
+    limit: Annotated[int, Field(description="Maximum number of audit records to return.")] = 20,
+    lookback_hours: Annotated[int, Field(description="Only return audit records from this many hours back from now. For example, 24 for the last 24 hours.")] = 24,
+) -> dict:
+    """
+    Retrieves the CommCell audit trail: operations performed by users such as logins,
+    configuration changes, and administrative actions.
+    """
+    try:
+        params = {
+            "limit": limit,
+            "startTimeUtc": int(time.time()) - lookback_hours * 3600,
+        }
+        return commvault_api_client.get("v4/audits", params=params)
+    except Exception as e:
+        logger.error(f"Error retrieving audit trail: {e}")
+        return ToolError({"error": str(e)})
+
+
 def create_send_logs_job_for_commcell(emailid: Annotated[str, Field(description="The email id to send logs to.")], commcell_name: Annotated[str, Field(description="The commcell name for which to send logs.")]) -> dict:
     """
     Triggers a new send logs job for the specified CommCell and sends logs to the provided email address.
@@ -184,5 +204,6 @@ COMMCELL_MANAGEMENT_TOOLS = [
     get_storage_space_utilization,
     create_send_logs_job_for_commcell,
     get_commcell_details,
-    get_entity_counts
+    get_entity_counts,
+    get_audit_trail,
 ]

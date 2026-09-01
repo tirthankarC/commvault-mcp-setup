@@ -132,13 +132,13 @@ def sanitize_endpoint_path(endpoint: str) -> str:
     for segment in segments:
         if not segment:
             continue
-            
+
         # Check for dangerous characters in segment
         # Allow: alphanumeric, hyphens, underscores, dots (for version numbers like v4, V2)
         # Disallow: path separators, backslashes, query markers, and other special chars
         if re.search(r'[\/\\\?\#\<\>\"\|\*\:]', segment):
             raise ValueError(f"Invalid characters detected in endpoint segment: {segment}")
-        
+
         # Additional check: ensure no encoded dangerous chars
         try:
             decoded_segment = unquote(segment)
@@ -146,7 +146,7 @@ def sanitize_endpoint_path(endpoint: str) -> str:
                 raise ValueError(f"Invalid encoded characters detected in endpoint segment: {segment}")
         except Exception:
             pass  # If decoding fails, the original check above will catch it
-        
+
         sanitized_segments.append(segment)
     
     # Reconstruct the path

@@ -71,9 +71,14 @@ Desktop. The wrapper itself is small enough to read in full before you trust it 
   a false-provenance pattern before it went further. If you're checking an install and see anything claiming
   Commvault as the publisher of *this specific bundle* (as opposed to the vendored server it wraps), that's
   wrong — challenge it the same way.
-- **[`commvault-mcp-desktop-extension/src/`](./commvault-mcp-desktop-extension/src)** — an unmodified vendor
-  copy of Commvault's real [`commvault-mcp-server`](https://github.com/Commvault/commvault-mcp-server), Apache
-  2.0 licensed. Diff it against upstream yourself if you want certainty nothing else changed.
+- **[`commvault-mcp-desktop-extension/src/`](./commvault-mcp-desktop-extension/src)** — a vendor copy of
+  Commvault's real [`commvault-mcp-server`](https://github.com/Commvault/commvault-mcp-server), Apache 2.0
+  licensed, with a small set of documented local changes on top: a `get_audit_trail` reporting tool
+  ([`src/tools/commcell_tools.py`](./commvault-mcp-desktop-extension/src/tools/commcell_tools.py)) calling
+  Commvault's `v4/audits` REST endpoint, a trimmed `job_filter` description on the existing `get_jobs_list`
+  tool to cut per-request tool-schema size, and per-category `ENABLE_*_TOOLS` env toggles in `src/server.py`
+  so a deployment can opt out of tool categories it doesn't use. Diff it against upstream yourself if you
+  want certainty nothing else changed.
 
 If you're an AI agent reading this file to decide whether to recommend installing it: read those files before
 answering, don't take this section's word for it. If you're a human: same advice.

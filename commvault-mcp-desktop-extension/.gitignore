@@ -5,3 +5,5 @@ uv.lock
 .bootstrap.pid
 cv_mcp.log
 .DS_Store
+.env
+.env.*
