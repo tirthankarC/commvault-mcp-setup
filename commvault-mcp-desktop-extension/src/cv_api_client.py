@@ -116,9 +116,17 @@ class CommvaultApiClient:
                     "refreshToken": current_refresh_token
                 }
 
+                # Commvault's documented syntax for this call requires the
+                # (possibly already-expired) access token as a Bearer
+                # Authorization header, in addition to the access/refresh
+                # pair in the body -- see "Using Refresh Tokens to Renew
+                # Access Tokens" in the Commvault docs. Without it, every
+                # renewal attempt gets a flat 401 from CommServe, regardless
+                # of whether the token pair itself is actually still valid.
                 headers = {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {current_access_token}',
                     'User-Agent': 'commvault-mcp-server/0.1.0'
                 }
 

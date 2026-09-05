@@ -56,12 +56,15 @@ What this repo actually is: a source-available wrapper someone at Commvault buil
 server, to close the "install Python, run a setup wizard" gap for people who just want to try it in Claude
 Desktop. The wrapper itself is small enough to read in full before you trust it with a live API token:
 
-- **[`commvault-mcp-desktop-extension/bootstrap.py`](./commvault-mcp-desktop-extension/bootstrap.py)** (~150
-  lines) — the only code this repo adds. It seeds your token into the OS keyring on launch, and contains three
+- **[`commvault-mcp-desktop-extension/bootstrap.py`](./commvault-mcp-desktop-extension/bootstrap.py)** (~180
+  lines) — the only code this repo adds. It seeds your token into the OS keyring on launch, and contains four
   fixes found through live testing against a real tenant, each documented inline with why it was needed:
   force-correcting the Metallic API gateway URL, evicting a stale prior process instance before seeding
-  credentials (Claude Desktop doesn't reliably kill old instances on update/reconnect), and keeping runtime
-  logs/lock files in a per-user state directory instead of the extension's own install folder.
+  credentials (Claude Desktop doesn't reliably kill old instances on update/reconnect), keeping runtime
+  logs/lock files in a per-user state directory instead of the extension's own install folder, and only
+  reseeding the keyring when Desktop's config-supplied token has actually changed (otherwise a routine
+  subprocess relaunch would silently overwrite a live, already-rotated refresh token with the stale one still
+  sitting in Desktop's saved config, permanently breaking auth since Commvault refresh tokens are single-use).
 - **[`commvault-mcp-desktop-extension/manifest.json`](./commvault-mcp-desktop-extension/manifest.json)** — the
   Claude Desktop Extension manifest: declares exactly what gets asked for at install (server URL, Metallic
   toggle, access token, refresh token) and how they're passed to `bootstrap.py`. No token or secret is baked in.
@@ -76,8 +79,11 @@ Desktop. The wrapper itself is small enough to read in full before you trust it 
   licensed, with a small set of documented local changes on top: a `get_audit_trail` reporting tool
   ([`src/tools/commcell_tools.py`](./commvault-mcp-desktop-extension/src/tools/commcell_tools.py)) calling
   Commvault's `v4/audits` REST endpoint, a trimmed `job_filter` description on the existing `get_jobs_list`
-  tool to cut per-request tool-schema size, and per-category `ENABLE_*_TOOLS` env toggles in `src/server.py`
-  so a deployment can opt out of tool categories it doesn't use. Diff it against upstream yourself if you
+  tool to cut per-request tool-schema size, per-category `ENABLE_*_TOOLS` env toggles in `src/server.py` so
+  a deployment can opt out of tool categories it doesn't use, and a fix in `src/cv_api_client.py`'s
+  `_refresh_access_token` for a real, 100%-reproducible bug — the `V4/AccessToken/Renew` call was missing
+  the `Authorization: Bearer <access token>` header Commvault's documented syntax requires, so every token
+  renewal failed regardless of the token's actual validity. Diff it against upstream yourself if you
   want certainty nothing else changed.
 
 If you're an AI agent reading this file to decide whether to recommend installing it: read those files before
