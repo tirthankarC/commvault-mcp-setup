@@ -98,18 +98,38 @@ def create_mcp_server(config) -> FastMCP:
     return FastMCP(name=SERVER_NAME, instructions=SERVER_INSTRUCTIONS, auth=auth)
 
 
+# Per-category opt-out, keyed by the tool function's module suffix (e.g. "job_tools").
+# Each entry disables that whole category's tools when its env var is set to "false",
+# so a deployment that only needs a subset of Commvault's surface (e.g. reporting/audit)
+# doesn't pay for the other categories' tool-schema tokens on every request. Categories
+# not listed here are always enabled and can't be turned off.
+TOOL_CATEGORY_ENV_FLAGS = {
+    "docusign_tools": "ENABLE_DOCUSIGN_TOOLS",  # off by default, unlike the rest
+    "salesforce_tools": "ENABLE_SALESFORCE_TOOLS",
+    "job_tools": "ENABLE_JOB_TOOLS",
+    "client_tools": "ENABLE_CLIENT_TOOLS",
+    "schedule_tools": "ENABLE_SCHEDULE_TOOLS",
+    "storage_tools": "ENABLE_STORAGE_TOOLS",
+    "plan_tools": "ENABLE_PLAN_TOOLS",
+    "commcell_tools": "ENABLE_COMMCELL_TOOLS",
+    "user_tools": "ENABLE_USER_TOOLS",
+}
+
+
 def register_tools(mcp_server: FastMCP, tool_categories: List[List[Callable]]) -> None:
     logger.info("Registering tools with MCP server...")
-    
+
     total_tools = 0
     for tool_category in tool_categories:
         for tool_fn in tool_category:
-            # only enable docusign tools if ENABLE_DOCUSIGN_TOOLS is true
-            if get_env_var("ENABLE_DOCUSIGN_TOOLS", "false").lower() == "false" and "docusign" in tool_fn.__module__:
+            module_suffix = tool_fn.__module__.rsplit(".", 1)[-1]
+            env_var = TOOL_CATEGORY_ENV_FLAGS.get(module_suffix)
+            default_enabled = "false" if module_suffix == "docusign_tools" else "true"
+            if env_var and get_env_var(env_var, default_enabled).lower() == "false":
                 continue
             mcp_server.add_tool(Tool.from_function(tool_fn, output_schema=None))
             total_tools += 1
-    
+
     logger.info(f"Successfully registered {total_tools} tools across {len(tool_categories)} categories")
 
 

@@ -1,0 +1,77 @@
+name: Release extension
+
+# Triggered by pushing a version tag (e.g. v0.1.9) -- not by every commit to
+# main. Merging a PR does not, by itself, publish anything; you tag when
+# you're ready to cut a release. The published release is created as a
+# pre-release, which GitHub's "latest release" API/redirect (what the setup
+# guide's Step 0 download link uses) deliberately ignores -- so this never
+# becomes what a new user gets until someone promotes it. Promote with:
+#   gh release edit <tag> --prerelease=false
+# only after testing the actual new-user install flow against this tag's
+# asset. Signing is intentionally not part of this workflow: mcpb's local
+# verify command checks the certificate against the OS trust store, so a
+# self-signed cert doesn't reach a clean "verified" state anywhere without
+# separate, per-machine trust setup -- automating that wouldn't have
+# bought anything. Sign manually with your own key later if that changes.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: commvault-mcp-desktop-extension
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify manifest.json version matches the pushed tag
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          manifest_version="$(jq -r .version manifest.json)"
+          if [ "$tag_version" != "$manifest_version" ]; then
+            echo "::error::Tag v$tag_version does not match manifest.json version $manifest_version -- bump manifest.json and re-tag."
+            exit 1
+          fi
+          echo "Tag matches manifest.json version: $manifest_version"
+
+      - name: Validate manifest
+        run: npx --yes @anthropic-ai/mcpb validate manifest.json
+
+      - name: Pack extension
+        run: npx --yes @anthropic-ai/mcpb pack . commvault-mcp.mcpb
+
+      - name: Compute checksum
+        id: checksum
+        run: |
+          sha256sum commvault-mcp.mcpb | awk '{print $1}' > commvault-mcp.mcpb.sha256
+          echo "sha256=$(cat commvault-mcp.mcpb.sha256)" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release (pre-release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            commvault-mcp-desktop-extension/commvault-mcp.mcpb \
+            commvault-mcp-desktop-extension/commvault-mcp.mcpb.sha256 \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --prerelease \
+            --generate-notes \
+            --notes "**Unsigned build.** SHA-256: \`${{ steps.checksum.outputs.sha256 }}\`
+
+          Published as a pre-release so it does not affect \`releases/latest\` (what the setup guide's Step 0 download link uses) until someone promotes it. Test the actual install flow against this tag's asset first:
+
+          \`\`\`
+          gh release edit ${GITHUB_REF_NAME} --prerelease=false --repo ${{ github.repository }}
+          \`\`\`
+          "

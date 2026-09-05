@@ -24,6 +24,7 @@ replace it on update/reinstall, so anything we want to persist or debug
 across those events has to live somewhere Desktop doesn't manage.
 """
 
+import hashlib
 import os
 import signal
 import subprocess
@@ -58,6 +59,10 @@ _STATE_DIR = _state_dir()
 _LOCK_FILE = os.path.join(_STATE_DIR, "bootstrap.pid")
 
 
+def _config_fingerprint(access_token: str, refresh_token: str) -> str:
+    return hashlib.sha256(f"{access_token}:{refresh_token}".encode()).hexdigest()
+
+
 def _seed_keyring_from_user_config() -> None:
     access_token = os.environ.pop("CV_ACCESS_TOKEN", "").strip()
     refresh_token = os.environ.pop("CV_REFRESH_TOKEN", "").strip()
@@ -72,8 +77,39 @@ def _seed_keyring_from_user_config() -> None:
         sys.exit(1)
 
     service_name = get_keyring_service_name()
+
+    # Claude Desktop re-injects whatever is in this extension's saved config
+    # on every launch of this process -- an app restart, a sleep/wake
+    # reconnect, an idle-timeout relaunch, or a manual disable/re-enable --
+    # not just when you actually change the token fields. Meanwhile
+    # cv_api_client.py refreshes the access/refresh token pair in the
+    # background on every 401 and writes the new pair into this same
+    # keyring. If we blindly reseeded from Desktop's config every launch, an
+    # unrelated restart would silently overwrite a live, already-rotated
+    # refresh token with the stale one Desktop still has on file -- and
+    # since Commvault refresh tokens are single-use, that stale token was
+    # already consumed by the earlier rotation, so the next refresh attempt
+    # fails permanently with "Failed to refresh token", with no other
+    # process or user involved.
+    #
+    # Only reseed when the config-supplied pair has actually changed since
+    # we last applied it (i.e. you genuinely typed a new token into
+    # Desktop's Settings) -- a routine relaunch on an unchanged config
+    # leaves whatever the running server has already rotated to untouched.
+    new_fingerprint = _config_fingerprint(access_token, refresh_token)
+    previous_fingerprint = keyring.get_password(service_name, "config_fingerprint")
+
+    if previous_fingerprint == new_fingerprint:
+        print(
+            "Extension config token unchanged since last launch; keeping "
+            "the current (possibly since-rotated) keyring tokens.",
+            file=sys.stderr,
+        )
+        return
+
     keyring.set_password(service_name, "access_token", access_token)
     keyring.set_password(service_name, "refresh_token", refresh_token)
+    keyring.set_password(service_name, "config_fingerprint", new_fingerprint)
 
 
 def _looks_like_our_process(pid: int) -> bool:
