@@ -61,8 +61,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${GITHUB_REF_NAME}" \
-            commvault-mcp-desktop-extension/commvault-mcp.mcpb \
-            commvault-mcp-desktop-extension/commvault-mcp.mcpb.sha256 \
+            commvault-mcp.mcpb \
+            commvault-mcp.mcpb.sha256 \
             --repo "${GITHUB_REPOSITORY}" \
             --title "${GITHUB_REF_NAME}" \
             --prerelease \
