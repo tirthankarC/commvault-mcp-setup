@@ -56,15 +56,19 @@ What this repo actually is: a source-available wrapper someone at Commvault buil
 server, to close the "install Python, run a setup wizard" gap for people who just want to try it in Claude
 Desktop. The wrapper itself is small enough to read in full before you trust it with a live API token:
 
-- **[`commvault-mcp-desktop-extension/bootstrap.py`](./commvault-mcp-desktop-extension/bootstrap.py)** (~180
-  lines) — the only code this repo adds. It seeds your token into the OS keyring on launch, and contains four
+- **[`commvault-mcp-desktop-extension/bootstrap.py`](./commvault-mcp-desktop-extension/bootstrap.py)** (~210
+  lines) — the only code this repo adds. It seeds your token into the OS keyring on launch, and contains five
   fixes found through live testing against a real tenant, each documented inline with why it was needed:
   force-correcting the Metallic API gateway URL, evicting a stale prior process instance before seeding
   credentials (Claude Desktop doesn't reliably kill old instances on update/reconnect), keeping runtime
-  logs/lock files in a per-user state directory instead of the extension's own install folder, and only
+  logs/lock files in a per-user state directory instead of the extension's own install folder, only
   reseeding the keyring when Desktop's config-supplied token has actually changed (otherwise a routine
   subprocess relaunch would silently overwrite a live, already-rotated refresh token with the stale one still
-  sitting in Desktop's saved config, permanently breaking auth since Commvault refresh tokens are single-use).
+  sitting in Desktop's saved config, permanently breaking auth since Commvault refresh tokens are single-use),
+  and retrying the Keychain write itself on `errSecDuplicateItem` -- `keyring`'s macOS backend deletes then
+  re-adds the item as two separate, non-atomic Keychain calls, so two `bootstrap.py` instances seeding
+  concurrently (e.g. Desktop starting a new one while evicting the old) can race and crash the loser's write;
+  reproduced directly against the real Keychain with concurrent writers before and after the fix.
 - **[`commvault-mcp-desktop-extension/manifest.json`](./commvault-mcp-desktop-extension/manifest.json)** — the
   Claude Desktop Extension manifest: declares exactly what gets asked for at install (server URL, Metallic
   toggle, access token, refresh token) and how they're passed to `bootstrap.py`. No token or secret is baked in.

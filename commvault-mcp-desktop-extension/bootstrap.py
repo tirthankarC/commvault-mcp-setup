@@ -34,8 +34,39 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import keyring
+import keyring.errors
 
 from src.utils import get_keyring_service_name
+
+
+def _set_keyring_password_with_retry(
+    service_name: str, key: str, value: str, max_retries: int = 5, retry_delay: float = 0.1
+) -> None:
+    """
+    keyring's macOS backend implements set_password as two separate,
+    non-atomic Keychain calls -- delete the existing item, then add the new
+    one (see keyring.backends.macOS.api.set_generic_password). When two
+    bootstrap.py processes seed the same keychain item at nearly the same
+    moment (e.g. Claude Desktop starting a new instance while the previous
+    one is still being evicted in _evict_stale_instance), both see the item
+    gone after their own delete and then race to add it back -- the loser's
+    SecItemAdd fails with errSecDuplicateItem (-25299), surfaced by keyring
+    as a generic PasswordSetError("... Unknown Error"). This is a timing
+    race, not a permissions/ACL problem (that would be KeyringLocked,
+    raised separately and intentionally not retried here). Reproduced
+    directly against the real Keychain with concurrent writers, and
+    confirmed a short retry resolves it every time: by the next attempt,
+    the winner's write has settled and this process's own delete-then-add
+    succeeds normally.
+    """
+    for attempt in range(max_retries):
+        try:
+            keyring.set_password(service_name, key, value)
+            return
+        except keyring.errors.PasswordSetError:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(retry_delay)
 
 
 def _state_dir() -> str:
@@ -107,9 +138,9 @@ def _seed_keyring_from_user_config() -> None:
         )
         return
 
-    keyring.set_password(service_name, "access_token", access_token)
-    keyring.set_password(service_name, "refresh_token", refresh_token)
-    keyring.set_password(service_name, "config_fingerprint", new_fingerprint)
+    _set_keyring_password_with_retry(service_name, "access_token", access_token)
+    _set_keyring_password_with_retry(service_name, "refresh_token", refresh_token)
+    _set_keyring_password_with_retry(service_name, "config_fingerprint", new_fingerprint)
 
 
 def _looks_like_our_process(pid: int) -> bool:
